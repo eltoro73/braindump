@@ -380,9 +380,9 @@ body::before {
       <div class="brand-name">Brain Dump</div>
       <div class="brand-sub">capture · assign · clear</div>
     </div>
-    <div class="inbox-badge" onclick="showInbox()">
+    <div class="inbox-badge" onclick="showInbox()" title="View your dumps">
       <div class="badge-n" id="badge-count">0</div>
-      <div class="badge-lbl">inbox</div>
+      <div class="badge-lbl">view dumps</div>
     </div>
   </div>
 
@@ -550,6 +550,8 @@ function goHome() {
 let captureMode = null;   // 'voice' | 'photo' | 'type'
 let chosenArena = 'work';
 let photoData   = null;
+let cachedPhotoData   = null;  // cached when moving to arena screen
+let cachedCaptureText = '';    // cached when moving to arena screen
 let recognition = null;
 let isRecording = false;
 let voiceText   = '';
@@ -681,6 +683,10 @@ function goToArena() {
   // Stop recording if still going
   stopVoice();
 
+  // Cache text and photo before switching screens (DOM will change)
+  cachedCaptureText = text;
+  cachedPhotoData   = photoData;
+
   // Show preview in arena header
   const preview = text || '📷 Photo capture';
   document.getElementById('arena-preview').textContent = preview;
@@ -720,8 +726,9 @@ function pickArena(el) {
 
 // ── DUMP IT ────────────────────────────────────────────────────
 function dumpIt() {
-  const text      = getCaptureText();
-  const imageData = photoData;
+  // Use cached values — DOM elements from capture screen are gone
+  const text      = cachedCaptureText;
+  const imageData = cachedPhotoData;
 
   if (!text && !imageData) { toast('Nothing to dump'); return; }
 
@@ -736,10 +743,12 @@ function dumpIt() {
   });
   save(items);
 
-  // Reset
-  photoData  = null;
-  voiceText  = '';
-  captureMode = null;
+  // Reset all state
+  photoData         = null;
+  cachedPhotoData   = null;
+  cachedCaptureText = '';
+  voiceText         = '';
+  captureMode       = null;
 
   goHome();
   toast('Dumped ✓', true);
